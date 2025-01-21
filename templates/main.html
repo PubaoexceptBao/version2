@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>흡연자 탐지 시스템</title>
+        <style>
+            body {
+                background-color: #2c2c54; 
+                color: white;
+                font-family: Arial, sans-serif;
+            }
+            .container {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 20px;
+            }
+            .results {
+                width: 30%;
+                padding: 10px;
+            }
+            .results ul {
+                list-style: none;
+                padding: 0;
+            }
+            .results li {
+                margin: 10px 0;
+                padding: 10px;
+                background-color: #40407a;
+                border-radius: 5px;
+                text-align: center;
+            }
+            .image-container {
+                width: 65%;
+                text-align: center;
+            }
+            img {
+                max-width: 100%;
+                border: 2px solid #575fcf;
+                border-radius: 8px;
+            }
+            button {
+                padding: 10px 15px;
+                border: none;
+                background-color: #575fcf;
+                color: white;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            button:hover {
+                background-color: #40407a;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 style="text-align:center;">흡연자 탐지 시스템</h1>
+        <div class="container">
+            <div class="results">
+                <h3>탐지 결과</h3>
+                <ul id="results"></ul>
+            </div>
+            <div class="image-container">
+                <h3>탐지된 이미지</h3>
+                <img id="capture" src="" alt="탐지된 이미지">
+            </div>
+        </div>
+        <script>
+            const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+            let lastUpdateTime = 0; // 마지막 업데이트 시간
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+
+                const currentTime = Date.now();
+                if (data.objects.includes("cigarette") && currentTime - lastUpdateTime >= 20000) { // 최소 20초
+                    lastUpdateTime = currentTime;
+
+                    // 새로운 리스트 아이템 생성
+                    const listItem = document.createElement("li");
+
+                    // 버튼 생성
+                    const button = document.createElement("button");
+                    button.textContent = `[${data.time}]`;
+                    button.onclick = function () {
+                        // 버튼 클릭 시 이미지 업데이트
+                        if (data.image_url) {
+                            document.getElementById("capture").src = data.image_url;
+                        }
+                    };
+
+                    // 버튼을 리스트 아이템에 추가
+                    listItem.appendChild(button);
+                    document.getElementById("results").appendChild(listItem);
+                }
+            };
+        </script>
+    </body>
+</html>
